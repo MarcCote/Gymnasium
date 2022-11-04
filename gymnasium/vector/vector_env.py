@@ -1,5 +1,5 @@
 """Base class for vectorized environments."""
-from typing import TYPE_CHECKING, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Generic, Optional, Tuple, TypeVar
 
 import numpy as np
 
@@ -74,14 +74,14 @@ class VectorEnv(Generic[ObsType, ActType, ArrayType]):
     def reset(
         self,
         *,
-        seed: Optional[Union[int, List[int]]] = None,
+        seed: Optional[int] = None,
         options: Optional[dict] = None,
     ) -> Tuple[ObsType, dict]:  # type: ignore
         """Reset all parallel environments and return a batch of initial observations and info.
 
         Args:
             seed: The environment reset seeds
-            options: If to return the options
+            options: Option information for the environment reset
 
         Returns:
             A batch of observations and info from the vectorized environment.

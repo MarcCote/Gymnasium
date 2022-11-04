@@ -112,3 +112,34 @@ def test_final_obs_info(vectoriser):
     assert info["final_observation"] == np.array([0]) and info["final_info"] == {
         "action": 3
     }
+
+
+@pytest.mark.parametrize(
+    "vectoriser",
+    (
+        SyncVectorEnv,
+        partial(AsyncVectorEnv, shared_memory=True),
+        partial(AsyncVectorEnv, shared_memory=False),
+    ),
+    ids=["Sync", "Async with shared memory", "Async without shared memory"],
+)
+def test_reset_with_list_of_options(vectoriser):
+    """Tests that the vector environments can be reset with different options."""
+
+    def reset_fn(self, seed=None, options=None):
+        return [0], {"options": options}
+
+    def thunk():
+        return GenericTestEnv(reset_fn=reset_fn)
+
+    env = vectoriser([thunk, thunk, thunk])
+    _, infos = env.reset()
+    assert np.array_equal(infos["options"], (None, None, None))
+
+    options = {"setting": 123}
+    _, infos = env.reset(options=options)
+    assert np.array_equal(infos["options"], (options, options, options))
+
+    options = [{"setting": 1}, {"setting": 2}, {"setting": 3}]
+    _, infos = env.reset(options=options)
+    assert np.array_equal(infos["options"], options)

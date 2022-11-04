@@ -70,7 +70,7 @@ class SyncVectorEnv(VectorEnv):
     def reset(
         self,
         seed: Optional[Union[int, List[int]]] = None,
-        options: Optional[dict] = None,
+        options: Optional[Union[dict, List[dict]]] = None,
     ):
         """Waits for the calls triggered by :meth:`reset_async` to finish and returns the results.
 
@@ -87,17 +87,23 @@ class SyncVectorEnv(VectorEnv):
             seed = [seed + i for i in range(self.num_envs)]
         assert len(seed) == self.num_envs
 
+        if options is None:
+            options = [None for _ in range(self.num_envs)]
+        if isinstance(options, dict):
+            options = [options for _ in range(self.num_envs)]
+        assert len(options) == self.num_envs
+
         self._terminateds[:] = False
         self._truncateds[:] = False
         observations = []
         infos = {}
-        for i, (env, single_seed) in enumerate(zip(self.envs, seed)):
+        for i, (env, single_seed, option) in enumerate(zip(self.envs, seed, options)):
 
             kwargs = {}
             if single_seed is not None:
                 kwargs["seed"] = single_seed
-            if options is not None:
-                kwargs["options"] = options
+            if option is not None:
+                kwargs["options"] = option
 
             observation, info = env.reset(**kwargs)
             observations.append(observation)

@@ -75,13 +75,13 @@ class VectorEnv(Generic[ObsType, ActType, ArrayType]):
         self,
         *,
         seed: Optional[Union[int, List[int]]] = None,
-        options: Optional[dict] = None,
+        options: Optional[Union[dict, List[dict]]] = None,
     ) -> Tuple[ObsType, dict]:  # type: ignore
         """Reset all parallel environments and return a batch of initial observations and info.
 
         Args:
             seed: The environment reset seeds
-            options: If to return the options
+            options: Option information for the environment reset
 
         Returns:
             A batch of observations and info from the vectorized environment.

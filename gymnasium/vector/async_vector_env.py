@@ -170,15 +170,15 @@ class AsyncVectorEnv(VectorEnv):
     def reset_async(
         self,
         seed: Optional[Union[int, List[int]]] = None,
-        options: Optional[dict] = None,
+        options: Optional[Union[dict, List[dict]]] = None,
     ):
         """Send calls to the :obj:`reset` methods of the sub-environments.
 
         To get the results of these calls, you may invoke :meth:`reset_wait`.
 
         Args:
-            seed: List of seeds for each environment
-            options: The reset option
+            seed: The environment reset seeds
+            options: Option information for the environment reset
 
         Raises:
             ClosedEnvironmentError: If the environment was closed (if :meth:`close` was previously called).
@@ -194,18 +194,24 @@ class AsyncVectorEnv(VectorEnv):
             seed = [seed + i for i in range(self.num_envs)]
         assert len(seed) == self.num_envs
 
+        if options is None:
+            options = [None for _ in range(self.num_envs)]
+        if isinstance(options, dict):
+            options = [options for _ in range(self.num_envs)]
+        assert len(options) == self.num_envs
+
         if self._state != AsyncState.DEFAULT:
             raise AlreadyPendingCallError(
                 f"Calling `reset_async` while waiting for a pending call to `{self._state.value}` to complete",
                 str(self._state.value),
             )
 
-        for pipe, single_seed in zip(self.parent_pipes, seed):
+        for pipe, single_seed, option in zip(self.parent_pipes, seed, options):
             single_kwargs = {}
             if single_seed is not None:
                 single_kwargs["seed"] = single_seed
-            if options is not None:
-                single_kwargs["options"] = options
+            if option is not None:
+                single_kwargs["options"] = option
 
             pipe.send(("reset", single_kwargs))
         self._state = AsyncState.WAITING_RESET
@@ -260,13 +266,13 @@ class AsyncVectorEnv(VectorEnv):
         self,
         *,
         seed: Optional[Union[int, List[int]]] = None,
-        options: Optional[dict] = None,
+        options: Optional[Union[dict, List[dict]]] = None,
     ):
         """Reset all parallel environments and return a batch of initial observations and info.
 
         Args:
             seed: The environment reset seeds
-            options: If to return the options
+            options: Option information for the environment reset
 
         Returns:
             A batch of observations and info from the vectorized environment.
